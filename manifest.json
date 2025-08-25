@@ -154,6 +154,40 @@
         "Built": "R 4.5.0; ; 2025-04-08 00:42:19 UTC; windows"
       }
     },
+    "RMariaDB": {
+      "Source": "CRAN",
+      "Repository": "https://mirror.truenetwork.ru/CRAN",
+      "description": {
+        "Package": "RMariaDB",
+        "Title": "Database Interface and MariaDB Driver",
+        "Version": "1.3.4",
+        "Authors@R": "c(\n    person(\"Kirill\", \"Müller\", , \"kirill@cynkra.com\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-1416-3412\")),\n    person(\"Jeroen\", \"Ooms\", role = \"aut\",\n           comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"David\", \"James\", role = \"aut\"),\n    person(\"Saikat\", \"DebRoy\", role = \"aut\"),\n    person(\"Hadley\", \"Wickham\", role = \"aut\"),\n    person(\"Jeffrey\", \"Horner\", role = \"aut\"),\n    person(\"R Consortium\", role = \"fnd\"),\n    person(\"RStudio\", role = \"cph\")\n  )",
+        "Description": "Implements a DBI-compliant interface to MariaDB\n    (<https://mariadb.org/>) and MySQL (<https://www.mysql.com/>)\n    databases.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://rmariadb.r-dbi.org, https://github.com/r-dbi/RMariaDB,\nhttps://downloads.mariadb.org/connector-c/",
+        "BugReports": "https://github.com/r-dbi/RMariaDB/issues",
+        "Depends": "R (>= 2.8.0)",
+        "Imports": "bit64, blob, DBI (>= 1.1.3), hms (>= 0.5.0), lubridate,\nmethods, rlang",
+        "Suggests": "DBItest (>= 1.7.2.9001), decor, readr, rprojroot, testthat\n(>= 3.0.0), withr",
+        "LinkingTo": "cpp11, plogr",
+        "Config/Needs/website": "r-dbi/dbitemplate",
+        "Config/autostyle/scope": "line_breaks",
+        "Config/autostyle/strict": "false",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "yes",
+        "RoxygenNote": "7.3.2.9000",
+        "SystemRequirements": "libmariadb-client-lgpl-dev or libmariadb-dev or\nlibmysqlclient-dev, with libssl-dev (deb),\nmariadb-connector-c-devel or mariadb-devel (rpm),\nmariadb-connector-c or mysql-connector-c (brew)",
+        "Collate": "'MariaDBConnection.R' 'MariaDBDriver.R' 'MariaDBResult.R'\n'RMariaDB-package.R' 'coerce.R' 'compatRowNames.R' 'connect.R'\n'cpp11.R' 'dbAppendTable_MariaDBConnection.R'\n'dbBegin_MariaDBConnection.R' 'dbBind_MariaDBResult.R'\n'dbClearResult_MariaDBResult.R' 'dbColumnInfo_MariaDBResult.R'\n'dbCommit_MariaDBConnection.R' 'dbConnect_MariaDBDriver.R'\n'dbDataType_MariaDBConnection.R' 'dbDataType_MariaDBDriver.R'\n'dbDisconnect_MariaDBConnection.R'\n'dbExistsTable_MariaDBConnection_character.R'\n'dbFetch_MariaDBResult.R' 'dbGetInfo_MariaDBConnection.R'\n'dbGetInfo_MariaDBDriver.R' 'dbGetRowCount_MariaDBResult.R'\n'dbGetRowsAffected_MariaDBResult.R'\n'dbGetStatement_MariaDBResult.R'\n'dbHasCompleted_MariaDBResult.R'\n'dbIsValid_MariaDBConnection.R' 'dbIsValid_MariaDBDriver.R'\n'dbIsValid_MariaDBResult.R'\n'dbListObjects_MariaDBConnection_ANY.R'\n'dbListTables_MariaDBConnection.R'\n'dbQuoteIdentifier_MariaDBConnection_Id.R'\n'dbQuoteIdentifier_MariaDBConnection_SQL.R'\n'dbQuoteIdentifier_MariaDBConnection_character.R'\n'dbQuoteLiteral_MariaDBConnection.R'\n'dbQuoteLiteral_MySQLConnection.R'\n'dbQuoteString_MariaDBConnection_SQL.R'\n'dbQuoteString_MariaDBConnection_character.R'\n'dbReadTable_MariaDBConnection_character.R'\n'dbRemoveTable_MariaDBConnection_character.R'\n'dbRollback_MariaDBConnection.R'\n'dbSendQuery_MariaDBConnection_character.R'\n'dbSendStatement_MariaDBConnection_character.R'\n'dbUnloadDriver_MariaDBDriver.R'\n'dbUnquoteIdentifier_MariaDBConnection_SQL.R'\n'dbWriteTable_MariaDBConnection_character_character.R'\n'dbWriteTable_MariaDBConnection_character_data.frame.R'\n'default.R' 'export.R' 'query.R' 'quote-mysql.R' 'quote.R'\n'show_MariaDBConnection.R' 'sqlData_MariaDBConnection.R'\n'table.R' 'transaction.R' 'utils.R' 'zzz.R'",
+        "Packaged": "2025-02-24 18:19:17 UTC; kirill",
+        "Author": "Kirill Müller [aut, cre] (<https://orcid.org/0000-0002-1416-3412>),\n  Jeroen Ooms [aut] (<https://orcid.org/0000-0002-4035-0289>),\n  David James [aut],\n  Saikat DebRoy [aut],\n  Hadley Wickham [aut],\n  Jeffrey Horner [aut],\n  R Consortium [fnd],\n  RStudio [cph]",
+        "Maintainer": "Kirill Müller <kirill@cynkra.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-02-24 18:50:05 UTC",
+        "Built": "R 4.5.1; x86_64-w64-mingw32; 2025-08-20 02:07:15 UTC; windows",
+        "Archs": "x64"
+      }
+    },
     "Rcpp": {
       "Source": "CRAN",
       "Repository": "https://mirror.truenetwork.ru/CRAN",
@@ -754,6 +788,33 @@
         "Repository": "CRAN",
         "Date/Publication": "2024-03-19 17:00:05 UTC",
         "Built": "R 4.5.0; ; 2025-04-14 02:59:08 UTC; windows"
+      }
+    },
+    "dbx": {
+      "Source": "CRAN",
+      "Repository": "https://mirror.truenetwork.ru/CRAN",
+      "description": {
+        "Package": "dbx",
+        "Type": "Package",
+        "Title": "A Fast, Easy-to-Use Database Interface",
+        "Version": "0.4.0",
+        "Date": "2025-03-17",
+        "Authors@R": "person(\"Andrew\", \"Kane\", email = \"andrew@chartkick.com\", role = c(\"aut\", \"cre\"))",
+        "Description": "Provides select, insert, update, upsert, and delete database operations. Supports 'PostgreSQL', 'MySQL', 'SQLite', and more, and plays nicely with the 'DBI' package.",
+        "URL": "https://github.com/ankane/dbx",
+        "BugReports": "https://github.com/ankane/dbx/issues",
+        "License": "MIT + file LICENSE",
+        "RoxygenNote": "7.3.1",
+        "Encoding": "UTF-8",
+        "Imports": "DBI (>= 1.0.0)",
+        "Suggests": "testthat (>= 1.0.2), urltools (>= 1.7.0), RSQLite (>= 2.1.2),\nRMariaDB, RMySQL (>= 0.10.20), RPostgres, RPostgreSQL, hms,\njsonlite, blob, odbc",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-03-18 02:29:55 UTC; andrew",
+        "Author": "Andrew Kane [aut, cre]",
+        "Maintainer": "Andrew Kane <andrew@chartkick.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-18 11:00:02 UTC",
+        "Built": "R 4.5.1; ; 2025-08-20 01:01:44 UTC; windows"
       }
     },
     "digest": {
@@ -1973,6 +2034,32 @@
         "Repository": "CRAN",
         "Date/Publication": "2019-09-22 09:20:02 UTC",
         "Built": "R 4.5.0; ; 2025-04-14 00:38:06 UTC; windows"
+      }
+    },
+    "plogr": {
+      "Source": "CRAN",
+      "Repository": "https://mirror.truenetwork.ru/CRAN",
+      "description": {
+        "Package": "plogr",
+        "Title": "The 'plog' C++ Logging Library",
+        "Version": "0.2.0",
+        "Date": "2018-03-24",
+        "Authors@R": "c(\n  person(\"Kirill\", \"Müller\", role = c(\"aut\", \"cre\"), email = \"krlmlr+r@mailbox.org\"),\n  person(\"Sergey\", \"Podobry\", role = \"cph\", comment = \"Author of the bundled plog library\"))",
+        "Description": "\n  A simple header-only logging library for C++.\n  Add 'LinkingTo: plogr' to 'DESCRIPTION', and '#include <plogr.h>' in your C++ modules to use it.",
+        "Suggests": "Rcpp",
+        "License": "MIT + file LICENSE",
+        "Encoding": "UTF-8",
+        "LazyData": "true",
+        "URL": "https://github.com/krlmlr/plogr#readme",
+        "BugReports": "https://github.com/krlmlr/plogr/issues",
+        "RoxygenNote": "6.0.1.9000",
+        "NeedsCompilation": "no",
+        "Packaged": "2018-03-24 11:02:06 UTC; muelleki",
+        "Author": "Kirill Müller [aut, cre],\n  Sergey Podobry [cph] (Author of the bundled plog library)",
+        "Maintainer": "Kirill Müller <krlmlr+r@mailbox.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2018-03-25 15:25:27 UTC",
+        "Built": "R 4.5.1; ; 2025-07-16 00:33:27 UTC; windows"
       }
     },
     "prettyunits": {
@@ -3305,7 +3392,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "8e3df4c7b14401fac2f6ec34fa4939e5"
+      "checksum": "f5085950c1ec0e1a0329dbb6b6e61c8d"
     },
     "data/expansions.csv": {
       "checksum": "2c12cdc786ec26f4516dc29050cd285b"

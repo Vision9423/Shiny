@@ -4,11 +4,26 @@ library(bslib)
 library(thematic)
 library(tidyverse)
 library(gitlink)
+library(DBI)
+library(RMariaDB)
+library(dbx)
 
 # Read data from a CSV file and perform data preprocessing
-expansions <- read_csv("data/expansions.csv") |>
+con <- dbConnect(
+  MariaDB(),
+  host = Sys.getenv('db_host'),
+  port = Sys.getenv('db_port'),
+  dbname = Sys.getenv('db_dbname'),
+  user = Sys.getenv('db_user'),
+  password = Sys.getenv('db_password')
+)
+
+expansions <- dbReadTable(con, 'expansions') |>
+  select(-id) %>%
   mutate(evaluation = factor(evaluation, levels = c("None", "A", "B")),
          propensity = factor(propensity, levels = c("Good", "Average", "Poor")))
+
+dbDisconnect(con)
 
 # Compute expansion rates by trial and group
 expansion_groups <- expansions |>
