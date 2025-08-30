@@ -76,6 +76,11 @@ server <- function(input, output, session) {
     res_auth$admin
   })
   
+  outputOptions(
+    x = output,
+    suspendWhenHidden = FALSE
+  )
+  
   observeEvent(res_auth, {
     req(res_auth$center)
     
@@ -84,13 +89,8 @@ server <- function(input, output, session) {
       selected = res_auth$center
     )
   })
-  
-  # тест авторизации
-  output$auth_output <- renderPrint({
-    reactiveValuesToList(res_auth)
-  })
-  
-  # UI всплывающего окна подтверждения рандомизации пациента
+
+    # UI всплывающего окна подтверждения рандомизации пациента
   output$patient_params <- renderUI({
     renderUI_patient(
       name = input$name,
