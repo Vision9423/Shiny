@@ -1,207 +1,277 @@
-# Load packages used by the app. Install missing packages, if needed.
 library(shiny)
+library(shinymanager)
+library(shinyFeedback)
+library(shinybusy)
 library(bslib)
-library(thematic)
-library(tidyverse)
-library(gitlink)
+library(tidyverse, warn.conflicts = FALSE)
+library(Minirand)
 library(DBI)
 library(RMariaDB)
-library(dbx)
+library(DT)
 
-# Read data from a CSV file and perform data preprocessing
-con <- dbConnect(
-  MariaDB(),
-  host = Sys.getenv('db_host'),
-  port = Sys.getenv('db_port'),
-  dbname = Sys.getenv('db_dbname'),
-  user = Sys.getenv('db_user'),
-  password = Sys.getenv('db_password')
+# UI ----------------------------------------------------------------------
+
+# настройки интерфейса (тема, колесо загрузки, предупреждения)
+source('ui/ui_settings.R')
+
+# ui: рандомизировать пациента
+source('ui/ui_randomize_patient.R')
+
+# ui: база данных
+source('ui/ui_data_base.R')
+
+
+# функции -----------------------------------------------------------------
+
+# подключение к БД
+source('fun/connectDB.R')
+
+# русский интерфейс для авторизации
+source('fun/shinymanager_ru.R')
+
+# авторизация
+source('fun/server_auth.R')
+
+# загрузить БД
+source('fun/get_db.R')
+
+# русифицация названия столбцов
+source('fun/get_ru_colnames.R')
+
+# перевод числовых данных в фактор
+source('fun/get_df_factors.R')
+
+# всплывающие окна
+source('fun/modal_dialogues.R')
+
+# рандомизация
+source('fun/randomization_DB.R')
+
+
+# модули ------------------------------------------------------------------
+
+# рандомизация
+source('module/patientsDB.R')
+
+
+
+
+ui <- page_fluid(
+  
+  # тема интерфейса
+  theme = bs_theme(bootswatch = 'litera'),
+  
+  # колесо загрузки и предупреждения
+  ui_settings,
+  
+  # панели с основным интерфейсом
+  navset_pill(
+    
+    # тест авторизации
+    nav_panel(
+      title = 'Состояние авторизации',
+      verbatimTextOutput(
+        outputId = 'auth_output'
+      ),
+      
+      verbatimTextOutput(
+        outputId = 'is_admin'
+      )
+    ),
+    
+    # рандомизация пациента
+    nav_panel(
+      title = 'Рандомизировать пациента',
+      ui_randomize_patient
+    ),
+    
+    # база данных рандомизированных пациентов
+    nav_panel(
+      title = 'База данных пациентов',
+      
+      actionButton(
+        inputId = 'get_patientsDB',
+        label = 'Обновить базу данных',
+        width = 350,
+        icon = icon("repeat")
+      ),
+      
+      patientsDBUI('patientsDB')
+    )
+    
+  )
 )
 
-expansions <- dbReadTable(con, 'expansions') |>
-  select(-id) %>%
-  mutate(evaluation = factor(evaluation, levels = c("None", "A", "B")),
-         propensity = factor(propensity, levels = c("Good", "Average", "Poor")))
+# активировать авторизацию в приложение
+ui <- secure_app(ui)
 
-dbDisconnect(con)
-
-# Compute expansion rates by trial and group
-expansion_groups <- expansions |>
-  group_by(industry, propensity, contract, evaluation) |>
-  summarize(success_rate = round(mean(outcome == "Won")* 100),
-            avg_amount = round(mean(amount)),
-            avg_days = round(mean(days)),
-            n = n()) |>
-  ungroup()
-
-# Compute expansion rates by trial
-overall_rates <- expansions |>
-  group_by(evaluation) |>
-  summarise(rate = round(mean(outcome == "Won"), 2))
-
-# Restructure expansion rates by trial as a vector
-rates <- structure(overall_rates$rate, names = overall_rates$evaluation)
-
-# Define lists for propensity, contract and industry choices
-propensities <- c("Good", "Average", "Poor")
-contracts <- c("Monthly", "Annual")
-industries <- c("Academia",
-                "Energy",
-                "Finance",
-                "Government",
-                "Healthcare",
-                "Insurance",
-                "Manufacturing",
-                "Non-Profit",
-                "Pharmaceuticals",
-                "Technology")
-
-# Set the default theme for ggplot2 plots
-ggplot2::theme_set(ggplot2::theme_minimal())
-
-# Apply the CSS used by the Shiny app to the ggplot2 plots
-thematic_shiny()
-
-
-# Define the Shiny UI layout
-ui <- page_sidebar(
+server <- function(input, output, session) {
   
-  # Set CSS theme
-  theme = bs_theme(bootswatch = "darkly",
-                   bg = "#222222",
-                   fg = "#86C7ED",
-                   success ="#86C7ED"),
+  # авторизация в приложение
+  res_auth <- server_auth()
   
-  # Add title
-  title = "Effectiveness of DemoCo App Free Trial by Customer Segment",
-  
-  # Add sidebar elements
-  sidebar = sidebar(title = "Select a segment of data to view",
-                    class ="bg-secondary",
-                    selectInput("industry", "Select industries", choices = industries, selected = "", multiple  = TRUE),
-                    selectInput("propensity", "Select propensities to buy", choices = propensities, selected = "", multiple  = TRUE),
-                    selectInput("contract", "Select contract types", choices = contracts, selected = "", multiple  = TRUE),
-                    "This app compares the effectiveness of two types of free trials, A (30-days) and B (100-days), at converting users into customers.",
-                    tags$img(src = "logo.png", width = "100%", height = "auto")),
-  
-  # Layout non-sidebar elements
-  layout_columns(card(card_header("Conversions over time"),
-                      plotOutput("line")),
-                 card(card_header("Conversion rates"),
-                      plotOutput("bar")),
-                 value_box(title = "Recommended Trial",
-                           value = textOutput("recommended_eval"),
-                           theme_color = "secondary"),
-                 value_box(title = "Customers",
-                           value = textOutput("number_of_customers"),
-                           theme_color = "secondary"),
-                 value_box(title = "Avg Spend",
-                           value = textOutput("average_spend"),
-                           theme_color = "secondary"),
-                 card(card_header("Conversion rates by subgroup"),
-                      tableOutput("table")),
-                 col_widths = c(8, 4, 4, 4, 4, 12),
-                 row_heights = c(4, 1.5, 3))
-)
-
-# Define the Shiny server function
-server <- function(input, output) {
-  
-  # Provide default values for industry, propensity, and contract selections
-  selected_industries <- reactive({
-    if (is.null(input$industry)) industries else input$industry
+  output$is_admin <- reactive({
+    res_auth$admin
   })
   
-  selected_propensities <- reactive({
-    if (is.null(input$propensity)) propensities else input$propensity
-  })
-  
-  selected_contracts <- reactive({
-    if (is.null(input$contract)) contracts else input$contract
-  })
-  
-  # Filter data against selections
-  filtered_expansions <- reactive({
-    expansions |>
-      filter(industry %in% selected_industries(),
-             propensity %in% selected_propensities(),
-             contract %in% selected_contracts())
-  })
-  
-  # Compute conversions by month
-  conversions <- reactive({
-    filtered_expansions() |>
-      mutate(date = floor_date(date, unit = "month")) |>
-      group_by(date, evaluation) |>
-      summarize(n = sum(outcome == "Won")) |>
-      ungroup()
-  })
-  
-  # Retrieve conversion rates for selected groups
-  groups <- reactive({
-    expansion_groups |>
-      filter(industry %in% selected_industries(),
-             propensity %in% selected_propensities(),
-             contract %in% selected_contracts())
-  })
-  
-  # Render text for recommended trial
-  output$recommended_eval <- renderText({
-    recommendation <-
-      filtered_expansions() |>
-      group_by(evaluation) |>
-      summarise(rate = mean(outcome == "Won")) |>
-      filter(rate == max(rate)) |>
-      pull(evaluation)
+  observeEvent(res_auth, {
+    req(res_auth$center)
     
-    as.character(recommendation[1])
+    updateRadioButtons(
+      inputId = 'center',
+      selected = res_auth$center
+    )
   })
   
-  # Render text for number of customers
-  output$number_of_customers <- renderText({
-    sum(filtered_expansions()$outcome == "Won") |>
-      format(big.mark = ",")
+  # тест авторизации
+  output$auth_output <- renderPrint({
+    reactiveValuesToList(res_auth)
   })
   
-  # Render text for average spend
-  output$average_spend <- renderText({
-    x <-
-      filtered_expansions() |>
-      filter(outcome == "Won") |>
-      summarise(spend = round(mean(amount))) |>
-      pull(spend)
+  # UI всплывающего окна подтверждения рандомизации пациента
+  output$patient_params <- renderUI({
+    renderUI_patient(
+      name = input$name,
+      date_birth = input$date_birth,
+      mts_interval = input$mts_interval,
+      fong = input$fong,
+      center = input$center,
+      mutation = input$mutation,
+      mts_localization = input$mts_localization,
+      act_after_oper = input$act_after_oper
+    )
+  })
+  
+  
+  # вызвать окно подтверждения рандомизации
+  observeEvent(input$add_patient, {
     
-    str_glue("${x}")
+    feedbackWarning(
+      inputId = 'name',
+      show = !isTruthy(input$name),
+      text = "Пожалуйста, заполните ФИО пациента"
+    )
+    
+    feedbackWarning(
+      inputId = 'date_birth',
+      show = !isTruthy(input$date_birth),
+      text = "Пожалуйста, заполните дату рождения пациента"
+    )
+    
+    # проверить, что все данные заполнены
+    patient_input <- list(
+      input$mts_interval,
+      input$fong,
+      input$mutation,
+      input$mts_localization,
+      input$act_after_oper
+    )
+    
+    is_valid_patient_input <- sapply(patient_input, isTruthy)
+    
+    if (!all(is_valid_patient_input)) {
+      showNotification(
+        "Не все поля заполнены",
+        type = 'warning'
+      )
+    }
+    
+    req(
+      input$name, input$date_birth, input$mts_interval,
+      input$fong, input$mutation, input$mts_localization,
+      input$act_after_oper
+    )
+    
+    # вызвать всплывающее окно для подтверждения введенных данных
+    showModal(modalDialog(
+      title = 'Подтвердите введенные данные',
+      uiOutput(outputId = 'patient_params'),
+      
+      footer = tagList(
+        actionButton("confirm_action", "Рандомизировать", class = "btn-success"),
+        modalButton("Отменить")
+      ),
+      
+      easyClose = FALSE
+    ))
   })
   
-  # Render line plot for conversions over time
-  output$line <- renderPlot({
-    ggplot(conversions(), aes(x = date, y = n, color = evaluation)) +
-      geom_line() +
-      theme(axis.title = element_blank()) +
-      labs(color = "Trial Type")
+  # выполнить рандомизацию и добавить пациента в БД
+  observeEvent(input$confirm_action, {
+    
+    req(
+      input$name, input$date_birth, input$center,
+      input$mts_interval, input$fong, input$mutation,
+      input$mts_localization, input$act_after_oper
+    )
+    
+    con <- connectDB()
+    on.exit(dbDisconnect(conn = con), add = TRUE)
+    
+    treatment <- add_patient(
+      conn = con,
+      name = input$name,
+      date_birth = input$date_birth,
+      mts_interval = as.integer(input$mts_interval),
+      fong = as.integer(input$fong),
+      center = as.integer(input$center),
+      mutation = as.integer(input$mutation),
+      mts_localization = as.integer(input$mts_localization),
+      act_after_oper = as.integer(input$act_after_oper)
+    )
+    
+    dbDisconnect(conn = con)
+    on.exit(NULL, add = FALSE)
+    
+    # цвет сообщения в зависимости от группы
+    color <- ifelse(treatment == 0, "#006400", "#FF4500")
+    
+    # перевести группу из числового значения в фактор
+    treatment <- factor(
+      x = treatment,
+      levels = c(0, 1),
+      labels = c('Динамическое наблюдение', 'Адъювантная химиотерапия')
+    )
+    
+    # UI всплывающего окна подтверждения рандомизации пациента
+    output$random_success <- renderUI({
+      tagList(
+        p(
+          'Пациент', tags$b(input$name), 'рандомизирован в группу:',
+          style = "text-align: center;"
+        ),
+        h3(
+          treatment,
+          style = sprintf("border: 3px solid %s;
+                         padding: 10px;
+                         border-radius: 10px;
+                         text-align: center;
+                         display: inline-block;", color)
+        )
+      )
+    })
+    
+    removeModal()
+    
+    showModal(modalDialog(
+      title = 'Успешно',
+      uiOutput(outputId = 'random_success'),
+      
+      footer = tagList(
+        modalButton("Закрыть окно")
+      ),
+      
+      easyClose = FALSE
+    ))
+    
+    
   })
   
-  # Render bar plot for conversion rates by subgroup
-  output$bar <- renderPlot({
-    groups() |>
-      group_by(evaluation) |>
-      summarise(rate = round(sum(n * success_rate) / sum(n), 2)) |>
-      ggplot(aes(x = evaluation, y = rate, fill = evaluation)) +
-      geom_col() +
-      guides(fill = "none") +
-      theme(axis.title = element_blank()) +
-      scale_y_continuous(limits = c(0, 100))
+  patientsDB_raw <- eventReactive(input$get_patientsDB, {
+    get_db(admin = res_auth$admin, center = res_auth$center)
   })
   
-  # Render table for conversion rates by subgroup
-  output$table <- renderTable({
-    groups() |>
-      select(industry, propensity, contract, evaluation, success_rate) |>
-      pivot_wider(names_from = evaluation, values_from = success_rate)
-  },
-  digits = 0)
+  patientsDBServer('patientsDB', patientsDB_raw)
 }
 
-# Create the Shiny app
 shinyApp(ui = ui, server = server)
