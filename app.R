@@ -67,18 +67,6 @@ ui <- page_fluid(
   # панели с основным интерфейсом
   navset_pill(
     
-    # тест авторизации
-    nav_panel(
-      title = 'Состояние авторизации',
-      verbatimTextOutput(
-        outputId = 'auth_output'
-      ),
-      
-      verbatimTextOutput(
-        outputId = 'is_admin'
-      )
-    ),
-    
     # рандомизация пациента
     nav_panel(
       title = 'Рандомизировать пациента',
@@ -121,11 +109,6 @@ server <- function(input, output, session) {
       inputId = 'center',
       selected = res_auth$center
     )
-  })
-  
-  # тест авторизации
-  output$auth_output <- renderPrint({
-    reactiveValuesToList(res_auth)
   })
   
   # UI всплывающего окна подтверждения рандомизации пациента
