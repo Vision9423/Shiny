@@ -49,18 +49,6 @@ ui <- page_fluid(
   
   navset_pill(
     
-    # тест авторизации
-    nav_panel(
-      title = 'Состояние авторизации',
-      verbatimTextOutput(
-        outputId = 'auth_output'
-      ),
-      
-      verbatimTextOutput(
-        outputId = 'is_admin'
-      )
-    ),
-    
     # рандомизация пациента
     nav_panel(
       title = 'Рандомизировать пациента',
