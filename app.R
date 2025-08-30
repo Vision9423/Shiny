@@ -78,6 +78,7 @@ server <- function(input, output, session) {
   
   outputOptions(
     x = output,
+    name = 'is_admin',
     suspendWhenHidden = FALSE
   )
   
