@@ -1,18 +1,33 @@
 library(shiny)
 library(shinymanager)
-library(shinyFeedback)
-library(shinybusy)
 library(bslib)
+library(shinybusy)
 library(tidyverse, warn.conflicts = FALSE)
 library(Minirand)
 library(DBI)
 library(RMariaDB)
 library(DT)
 
-# UI ----------------------------------------------------------------------
+# функция для подключения к БД
+source('fun/connectDB.R')
 
-# настройки интерфейса (тема, колесо загрузки, предупреждения)
-source('ui/ui_settings.R')
+# русский интерфейс для авторизации
+source('fun/shinymanager_ru.R')
+
+# функция для авторизации
+source('fun/server_auth.R')
+
+# функция для руссификации названия столбцов
+source('fun/get_ru_colnames.R')
+
+# функция для перевода числовых данных в фактор
+source('fun/get_df_factors.R')
+
+# функция для всплывающих окон
+source('fun/modal_dialogues.R')
+
+# функция для рандомизации
+source('fun/randomization_DB.R')
 
 # ui: рандомизировать пациента
 source('ui/ui_randomize_patient.R')
@@ -20,52 +35,31 @@ source('ui/ui_randomize_patient.R')
 # ui: база данных
 source('ui/ui_data_base.R')
 
-
-# функции -----------------------------------------------------------------
-
-# подключение к БД
-source('fun/connectDB.R')
-
-# русский интерфейс для авторизации
-source('fun/shinymanager_ru.R')
-
-# авторизация
-source('fun/server_auth.R')
-
-# загрузить БД
-source('fun/get_db.R')
-
-# русифицация названия столбцов
-source('fun/get_ru_colnames.R')
-
-# перевод числовых данных в фактор
-source('fun/get_df_factors.R')
-
-# всплывающие окна
-source('fun/modal_dialogues.R')
-
-# рандомизация
-source('fun/randomization_DB.R')
-
-
-# модули ------------------------------------------------------------------
-
-# рандомизация
-source('module/patientsDB.R')
-
-
-
-
 ui <- page_fluid(
   
-  # тема интерфейса
+  # тема приложения
   theme = bs_theme(bootswatch = 'litera'),
   
-  # колесо загрузки и предупреждения
-  ui_settings,
+  # колесо загрузки
+  add_busy_spinner(
+    spin = 'fulfilling-bouncing-circle',
+    color = "#112446",
+    position = 'full-page'
+  ),
   
-  # панели с основным интерфейсом
   navset_pill(
+    
+    # тест авторизации
+    nav_panel(
+      title = 'Состояние авторизации',
+      verbatimTextOutput(
+        outputId = 'auth_output'
+      ),
+      
+      verbatimTextOutput(
+        outputId = 'is_admin'
+      )
+    ),
     
     # рандомизация пациента
     nav_panel(
@@ -76,15 +70,7 @@ ui <- page_fluid(
     # база данных рандомизированных пациентов
     nav_panel(
       title = 'База данных пациентов',
-      
-      actionButton(
-        inputId = 'get_patientsDB',
-        label = 'Обновить базу данных',
-        width = 350,
-        icon = icon("repeat")
-      ),
-      
-      patientsDBUI('patientsDB')
+      ui_data_base
     )
     
   )
@@ -111,6 +97,11 @@ server <- function(input, output, session) {
     )
   })
   
+  # тест авторизации
+  output$auth_output <- renderPrint({
+    reactiveValuesToList(res_auth)
+  })
+  
   # UI всплывающего окна подтверждения рандомизации пациента
   output$patient_params <- renderUI({
     renderUI_patient(
@@ -125,47 +116,11 @@ server <- function(input, output, session) {
     )
   })
   
-  
   # вызвать окно подтверждения рандомизации
   observeEvent(input$add_patient, {
     
-    feedbackWarning(
-      inputId = 'name',
-      show = !isTruthy(input$name),
-      text = "Пожалуйста, заполните ФИО пациента"
-    )
+    req(input$name)
     
-    feedbackWarning(
-      inputId = 'date_birth',
-      show = !isTruthy(input$date_birth),
-      text = "Пожалуйста, заполните дату рождения пациента"
-    )
-    
-    # проверить, что все данные заполнены
-    patient_input <- list(
-      input$mts_interval,
-      input$fong,
-      input$mutation,
-      input$mts_localization,
-      input$act_after_oper
-    )
-    
-    is_valid_patient_input <- sapply(patient_input, isTruthy)
-    
-    if (!all(is_valid_patient_input)) {
-      showNotification(
-        "Не все поля заполнены",
-        type = 'warning'
-      )
-    }
-    
-    req(
-      input$name, input$date_birth, input$mts_interval,
-      input$fong, input$mutation, input$mts_localization,
-      input$act_after_oper
-    )
-    
-    # вызвать всплывающее окно для подтверждения введенных данных
     showModal(modalDialog(
       title = 'Подтвердите введенные данные',
       uiOutput(outputId = 'patient_params'),
@@ -181,12 +136,7 @@ server <- function(input, output, session) {
   
   # выполнить рандомизацию и добавить пациента в БД
   observeEvent(input$confirm_action, {
-    
-    req(
-      input$name, input$date_birth, input$center,
-      input$mts_interval, input$fong, input$mutation,
-      input$mts_localization, input$act_after_oper
-    )
+    req(input$name)
     
     con <- connectDB()
     on.exit(dbDisconnect(conn = con), add = TRUE)
@@ -250,11 +200,58 @@ server <- function(input, output, session) {
     
   })
   
-  patientsDB_raw <- eventReactive(input$get_patientsDB, {
-    get_db(admin = res_auth$admin, center = res_auth$center)
+  patientsDB <- eventReactive(input$get_patientsDB, {
+    
+    con <- connectDB()
+    on.exit(dbDisconnect(conn = con), add = TRUE)
+    
+    patientsDB <- dbReadTable(
+      conn = con,
+      name = 'patients'
+    )
+    
+    dbDisconnect(conn = con)
+    on.exit(NULL, add = FALSE)
+    
+    # перевести числовые переменные в факторы
+    # и сортировать по дате добавления (сначала новые)
+    patientsDB <- patientsDB %>% 
+      get_df_factors() %>% 
+      arrange(
+        desc(datetime_randomization),
+        desc(id)
+      )
+    
+    return(patientsDB)
   })
   
-  patientsDBServer('patientsDB', patientsDB_raw)
+  patientsDB_colnames <- reactive({
+    get_ru_colnames(patientsDB())
+  })
+  
+  output$patientsDB <- renderDT(
+    datatable(
+      patientsDB(),
+      colnames = patientsDB_colnames(),
+      options = list(
+        language = list(url = 'https://cdn.datatables.net/plug-ins/9dcbecd42ad/i18n/Russian.json'),
+        pageLength = 20
+      )
+    ) %>% 
+      formatDate(
+        columns = 'date_birth',
+        method = 'toLocaleDateString',
+        params = list('ru-RU')
+      ) %>% 
+      formatDate(
+        columns = 'datetime_randomization',
+        method = 'toLocaleString',
+        params = list(
+          'ru-RU', 
+          list(timeZone = 'Europe/Moscow', hour12 = FALSE)
+        )
+      )
+  )
 }
 
 shinyApp(ui = ui, server = server)
