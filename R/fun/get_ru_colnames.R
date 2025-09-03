@@ -3,7 +3,9 @@ get_ru_colnames <- function(data) {
   
   new_colnames <- case_match(
     original_colnames,
-    'id' ~ 'ID',
+    'id' ~ 'ID в БД',
+    'patient_num' ~ 'Номер в порядке добавления',
+    'patient_num_center' ~ 'Номер в порядке добавления в клиническом центре',
     'name' ~ 'ФИО пациента',
     'date_birth' ~ 'Дата рождения',
     'mts_interval' ~ 'Срок метастазирования',

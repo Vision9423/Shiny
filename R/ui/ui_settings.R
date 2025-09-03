@@ -7,5 +7,8 @@ ui_settings <- tagList(
   ),
   
   # предупреждения о незаполненных полях
-  useShinyFeedback()
+  useShinyFeedback(),
+  
+  # использовать shinyjs
+  useShinyjs()
 )

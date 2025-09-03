@@ -1,13 +1,37 @@
-# library(dplyr)
-# library(Minirand)
-# library(DBI)
-# library(RMariaDB)
+randomize_patient <- function(newPatientInfo) {
 
-add_patient <- function(conn, name, date_birth, mts_interval, fong, center, mutation,
-                        mts_localization, act_after_oper) {
+  # преобразовать данные в числовой тип
+  newPatientInfo <- modify_at(
+    newPatientInfo,
+    c(
+      "mts_interval", "fong", "mutation",
+      "mts_localization", "act_after_oper",
+      "center"
+    ),
+    as.numeric
+  )
+  
+  # подключиться к БД
+  con <- connectDB()
+  on.exit(dbDisconnect(conn = con), add = TRUE)
+  
+  # Попробовать взять блокировку на 20 секунд
+  dbExecute(con, "SELECT GET_LOCK('patient_randomization', 20)")
+
+
+  # Проверить, взяли ли мы лок
+  lock_acquired <- dbGetQuery(con, "SELECT IS_USED_LOCK('patient_randomization')")
+  if (is.na(lock_acquired[[1]])) {
+    stop("Не получилось рандомизировать пациента, повторите попытку")
+  }
+
+  # Освободить блокировку при выходе
+  on.exit({
+    dbExecute(con, "SELECT RELEASE_LOCK('patient_randomization')")
+  }, add = TRUE, after = FALSE)
   
   # получить таблицу пациентов
-  patientsDB <- dbReadTable(conn = conn, name = 'patients')
+  patientsDB <- dbReadTable(conn = con, name = 'patients')
   
   # рандомизировать группу
   
@@ -27,12 +51,12 @@ add_patient <- function(conn, name, date_birth, mts_interval, fong, center, muta
     
     # создать дата фрейм с новым пациентом
     new_patient <- tibble(
-      mts_interval = mts_interval,
-      fong = fong,
-      center = center,
-      mutation = mutation,
-      mts_localization = mts_localization,
-      act_after_oper = act_after_oper
+      mts_interval = newPatientInfo$mts_interval,
+      fong = newPatientInfo$fong,
+      center = newPatientInfo$center,
+      mutation = newPatientInfo$mutation,
+      mts_localization = newPatientInfo$mts_localization,
+      act_after_oper = newPatientInfo$act_after_oper
     )
     
     # добавить нового пациента в дата фрейм
@@ -65,14 +89,16 @@ add_patient <- function(conn, name, date_birth, mts_interval, fong, center, muta
   
   # занести нового пациента в БД
   dbExecute(
-    conn = conn,
+    conn = con,
     statement = query,
     params = list(
-      name, date_birth, mts_interval, fong, center, mutation,
-      mts_localization, act_after_oper, treatment
+      newPatientInfo$name, newPatientInfo$date_birth,
+      newPatientInfo$mts_interval, newPatientInfo$fong,
+      newPatientInfo$center, newPatientInfo$mutation,
+      newPatientInfo$mts_localization,
+      newPatientInfo$act_after_oper, treatment
     )
   )
   
-  cat('Новый пациент успешно добавлен в БД\n')
   return(treatment)
 }
