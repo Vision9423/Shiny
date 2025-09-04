@@ -29,14 +29,6 @@ library(bslib)
 # source('ui.R')
 # source('server.R')
 
-ui <- page_navbar(
-  title = 'Test',
-  nav_panel(
-    title = 'Testing',
-    'This is nav_panel'
-  )
-)
-
 ui <- page_fillable(
   title = 'Test',
   navset_tab(
