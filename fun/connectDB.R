@@ -4,11 +4,13 @@ db_name <- Sys.getenv('db_dbname')
 db_user <- Sys.getenv('db_user')
 db_password <- Sys.getenv('db_password')
 
+print(db_host)
+
 connectDB <- function() {
   if (db_host == "" || db_name == "" || db_user == "" || db_password == "") {
     stop("❌ Не заданы все переменные окружения для подключения к базе данных")
   }
-  
+
   dbConnect(
     MariaDB(),
     host = db_host,
