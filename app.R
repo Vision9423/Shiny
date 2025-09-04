@@ -35,6 +35,12 @@ source('ui/ui_randomize_patient.R')
 # ui: база данных
 source('ui/ui_data_base.R')
 
+db_host <- Sys.getenv('db_host')
+db_port <- Sys.getenv('db_port')
+db_name <- Sys.getenv('db_dbname')
+db_user <- Sys.getenv('db_user')
+db_password <- Sys.getenv('db_password')
+
 ui <- page_fluid(
   
   # тема приложения
