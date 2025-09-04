@@ -1,12 +1,8 @@
-get_db <- function(res_auth) {
-  
-  is_admin <- res_auth$admin == 1
-  center <- res_auth$center
-  
+get_db <- function(admin, center) {
   con <- connectDB()
   on.exit(if (dbIsValid(con)) dbDisconnect(con), add = TRUE)
   
-  if (is_admin) {
+  if (admin == 1) {
     dbReadTable(conn = con, name = "patients")
   } else {
     dbGetQuery(

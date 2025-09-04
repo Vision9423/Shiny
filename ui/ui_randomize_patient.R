@@ -15,17 +15,21 @@ ui_randomize_patient <- tagList(
     width = '500px'
   ),
   
-  radioButtons(
-    inputId = 'center',
-    label = 'Клинический центр',
-    choices = list(
-      'МНИОИ им. П.А. Герцена' = 0,
-      'НМИЦ онкологии им. Н.Н. Блохина' = 1,
-      'ММКЦ "Коммунарка"' = 2,
-      'Онкологический центр № 1 ГКБ имени С.С. Юдина' = 3
-    ),
+  conditionalPanel(
+    condition = "output.is_admin == 1",
     
-    inline = TRUE
+    radioButtons(
+      inputId = 'center',
+      label = 'Клинический центр',
+      choices = list(
+        'МНИОИ им. П.А. Герцена' = 0,
+        'НМИЦ онкологии им. Н.Н. Блохина' = 1,
+        'ММКЦ "Коммунарка"' = 2,
+        'Онкологический центр № 1 ГКБ имени С.С. Юдина' = 3
+      ),
+      
+      inline = TRUE
+    )
   ),
   
   radioButtons(
