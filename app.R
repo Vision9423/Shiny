@@ -37,6 +37,21 @@ ui <- page_navbar(
   )
 )
 
+ui <- page_fillable(
+  title = 'Test',
+  navset_tab(
+    nav_panel(
+      title = 'Tab 1',
+      'This is nav_panel 1'
+    ),
+    
+    nav_panel(
+      title = 'Tab 2',
+      'This is nav_panel 2'
+    )
+  )
+)
+
 server <- function(input, output, session) {}
 
 
