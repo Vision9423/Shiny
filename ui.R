@@ -1,3 +1,4 @@
+library(bslib)
 ui <- page_navbar(
   
   id = 'main',
