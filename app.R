@@ -29,9 +29,9 @@ library(bslib)
 # source('ui.R')
 # source('server.R')
 
-ui <- navbarPage(
-  tabPanel('tab1'),
-  tabPanel('tab2')
+ui <- page_fluid(
+  title = 'Test',
+  'Just testing'
 )
 
 server <- function(input, output, session) {}
