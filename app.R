@@ -65,7 +65,7 @@ ui <- page_fluid(
 )
 
 # активировать авторизацию в приложение
-ui <- secure_app(ui)
+# ui <- secure_app(ui)
 
 server <- function(input, output, session) {
   

@@ -1,3 +1,10 @@
+db_host <- Sys.getenv('db_host')
+cat(paste0(
+  '\n\n\n\n\n\n',
+  db_host,
+  '\n\n\n\n\n\n'
+))
+
 connectDB <- function() {
   dbConnect(
     MariaDB(),
